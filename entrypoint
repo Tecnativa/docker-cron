@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -e
+
+_add_line() {
+    local check="$1"
+    local line="$2"
+    local file="$3"
+    if ! grep -q "$check" "$file"; then
+        echo "$line" >> "$file"
+    fi
+}
+
+_log() {
+    local logfile=/var/log/syslog
+    if [ ! -f $logfile ]; then
+        touch $logfile
+        chown syslog:adm $logfile
+        chmod 640 $logfile
+    fi
+    echo "$(date '+%b %e %H:%I:%S') $(hostname) entrypoint[$$]: $1" >> $logfile
+}
+
+_stop() {
+    /etc/init.d/rsyslog stop
+    _log "Docker entrypoint stop"
+}
+
+trap "_stop" SIGINT SIGTERM SIGHUP
+
+_log "Docker entrypoint start"
+
+cat > /etc/ssmtp/ssmtp.conf << EOL
+root=$ROOT_EMAIL
+mailhub=$MAIL_RELAY_HOST:$MAIL_RELAY_PORT
+hostname=$(hostname)
+EOL
+
+if [ -n "$MAIL_RELAY_USER" ] && [ -n "$MAIL_RELAY_PASS" ]; then
+    _add_line "UseSTARTTLS=Yes" "UseSTARTTLS=Yes" /etc/ssmtp/ssmtp.conf
+    _add_line "AuthUser=" "AuthUser=$MAIL_RELAY_USER" /etc/ssmtp/ssmtp.conf
+    _add_line "AuthPass=" "AuthPass=$MAIL_RELAY_PASS" /etc/ssmtp/ssmtp.conf
+fi
+
+cat > /etc/ssmtp/revaliases << EOL
+root:$ROOT_EMAIL:$MAIL_RELAY_HOST:$MAIL_RELAY_PORT
+EOL
+
+_log "Docker entrypoint configured"
+
+# Start syslog daemon
+/etc/init.d/rsyslog start
+
+$@ & wait ${!}
