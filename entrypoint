@@ -22,6 +22,7 @@ _log() {
 }
 
 _stop() {
+    /etc/init.d/cron stop
     /etc/init.d/rsyslog stop
     _log "Docker entrypoint stop"
 }
@@ -31,9 +32,9 @@ trap "_stop" SIGINT SIGTERM SIGHUP
 _log "Docker entrypoint start"
 
 cat > /etc/ssmtp/ssmtp.conf << EOL
-root=$ROOT_EMAIL
+root=$ROOT_EMAIL_TO
 mailhub=$MAIL_RELAY_HOST:$MAIL_RELAY_PORT
-hostname=$(hostname)
+hostname=$HOST
 EOL
 
 if [ -n "$MAIL_RELAY_USER" ] && [ -n "$MAIL_RELAY_PASS" ]; then
@@ -43,12 +44,19 @@ if [ -n "$MAIL_RELAY_USER" ] && [ -n "$MAIL_RELAY_PASS" ]; then
 fi
 
 cat > /etc/ssmtp/revaliases << EOL
-root:$ROOT_EMAIL:$MAIL_RELAY_HOST:$MAIL_RELAY_PORT
+root:$ROOT_EMAIL_FROM:$MAIL_RELAY_HOST:$MAIL_RELAY_PORT
 EOL
+
+if [ -x /usr/local/bin/croninit ]; then
+    /usr/local/bin/croninit
+fi
 
 _log "Docker entrypoint configured"
 
 # Start syslog daemon
 /etc/init.d/rsyslog start
+
+# Start cron daemon
+/etc/init.d/cron start
 
 $@ & wait ${!}

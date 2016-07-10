@@ -2,7 +2,9 @@ FROM ubuntu:16.04
 
 MAINTAINER antespi@gmail.com
 
-ENV ROOT_EMAIL='postmaster' \
+ENV HOST='localhost' \
+    ROOT_EMAIL_FROM='postmaster' \
+    ROOT_EMAIL_TO='cron' \
     MAIL_RELAY_HOST='smtp_relay' \
     MAIL_RELAY_PORT='25' \
     MAIL_RELAY_USER='' \
@@ -14,7 +16,6 @@ RUN apt-get update && \
     apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y
 
 ADD entrypoint /usr/local/bin/
-
 RUN chmod a+rx /usr/local/bin/*
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
