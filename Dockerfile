@@ -13,7 +13,8 @@ ENV HOST='localhost' \
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y rsyslog ssmtp cron && \
-    apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y
+    apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y && \
+    rm -rf /var/cache/apt/archives/* /var/cache/apt/*.bin /var/lib/apt/lists/*
 
 ADD entrypoint /usr/local/bin/
 RUN chmod a+rx /usr/local/bin/*
