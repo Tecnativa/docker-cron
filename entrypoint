@@ -45,6 +45,7 @@ fi
 
 cat > /etc/ssmtp/revaliases << EOL
 root:$ROOT_EMAIL_FROM:$MAIL_RELAY_HOST:$MAIL_RELAY_PORT
+cron:$ROOT_EMAIL_FROM:$MAIL_RELAY_HOST:$MAIL_RELAY_PORT
 EOL
 
 if [ -x /usr/local/bin/croninit ]; then
